@@ -1,3 +1,9 @@
+# 框架图  
+
+
+![11rgg](https://github.com/sstoner/SUI/blob/master/images/framework.png)
+
+
 # step 1  
 获取所有雪球用户信息
 
