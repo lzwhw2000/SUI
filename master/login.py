@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 '''
 @Referfer xchaoinfo 
 '''
@@ -8,7 +7,7 @@ import hashlib
 import re
 
 
-# 构造 Request headers
+#Request headers
 agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36'
 headers = {
     'User-Agent': agent,
@@ -21,17 +20,16 @@ headers = {
 
 session = requests.session()
 
-
-# 密码的 md5 加密
+#get pwd md5
 def get_md5(password):
     md5 = hashlib.md5()
     md5.update(password.encode())
     return md5.hexdigest().upper()
 
-
+#phone login
 def login(telephone, password):
     url = 'https://xueqiu.com/'
-    session.get(url, headers=headers)  # 访问首页产生 cookies
+    session.get(url, headers=headers)
     headers['Referer'] = "https://xueqiu.com/"
     login_url_api = "https://xueqiu.com/service/csrf?api=%2Fuser%2Flogin"  # 模拟更真实的请求
     session.get(login_url_api, headers=headers)
@@ -47,15 +45,10 @@ def login(telephone, password):
     pa = r'"profile":"/(.*?)","screen_name":"(.*?)"'
     res = re.findall(pa, log.text)
     if res == []:
-        print('try angin\n')
-        #print("登录失败，请检查你的手机号和密码输入是否正确")
+        print("login failed please check account or passwd. ")
     else:
-        print('\nwelcome {}\n'.format(res[0]))
-
+        print('login successfully \n  id is：%s, your name is：%s' % (res[0]))
 
 telephone = ""
 password = ""
 login(telephone, password)
-
-
-
