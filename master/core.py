@@ -11,7 +11,7 @@ from logger import logger
 from login import session
 
 
-db_id = 1
+db_id = 36
 #r_client.sadd("Got","*")   # requested
 #r_client.sadd("Queue","*")  # wait to request
 #r_client.sadd("Inserted","*")   # inserted to db to be unique
@@ -42,7 +42,7 @@ def do_request(id_unique,page,followers):  #process page info   **all network re
     """
     headers['Referer'] = "https://xueqiu.com/" + str(id_unique)
     try:
-        paging = session.get(url.format(id_unique,page,getRandom()),headers=headers,timeout=3)
+        paging = session.get(url.format(id_unique,page,getRandom()),headers=headers)
         followers.extend(paging.json()["users"])
     except:
         logger.warn("{} request failed".format(id_unique))
@@ -80,17 +80,17 @@ def parse(id_unique):   #process id
     for follower in followers:
         #insert id to redis and insert dict to db
         uid = follower['id']
-        if not r_client.sismember("Inserted",uid):
-            #insert db
-            if Mdb["snowball" + str(db_id)].count() > 10000:
-                db_id = db_id + 1
-            Mdb["snowball" + str(db_id)].insert_one(follower)
-            r_client.sadd("Inserted", uid)
-            logger.info("You're inseting the {} data, screen_name {}".format(r_client.scard("Inserted"),follower['screen_name']))
-        if r_client.sismember("Got",uid):
-            r_client.sadd("Got",uid)
+        if r_client.sismember("Inserted",uid):
+            followers.remove(follower)
         else:
+            r_client.sadd("Inserted",uid)
+
+        if not r_client.sismember("Got",uid):
             r_client.sadd("Queue",uid)
+    if Mdb["snowball" + str(db_id)].count() > 10000:
+        db_id = db_id + 1
+    Mdb["snowball" + str(db_id)].insert_many(followers)
+    logger.info("Your insert {} 's {} followers successfully.".format(id_unique,len(followers)))
     r_client.sadd("Got",id_unique)
 
 def main():
@@ -98,7 +98,7 @@ def main():
         id_wait_req = r_client.spop("Queue").decode('utf-8')
         try:
             parse(id_wait_req)
-            time.sleep(1)
+            #time.sleep(0.1)
         except:
             #r_client.sadd("Error",id_wait_req)
             logger.warn("database operation failed,parse_id {}".format(id_wait_req))
